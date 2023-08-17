@@ -7,6 +7,8 @@
 
 ## How to use
 
+> **NOTE**: To follow the following usage, you need to have [Nix](https://nixos.org/nix/) installed with `flakes` & `new-comands` enabled first.
+
 Run packages directly from this repository(no cache):
 
 ```sh
