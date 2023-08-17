@@ -15,3 +15,8 @@
      attribute, or travis (and consequently caching) will fail!
    * Library functions, modules and overlays go in the respective directories
 2. [Add yourself to NUR](https://github.com/nix-community/NUR#how-to-add-your-own-repository)
+
+
+## LICENSE
+
+[MIT](./LICENSE)
