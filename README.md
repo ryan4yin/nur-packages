@@ -7,6 +7,14 @@
 
 ## How to use
 
+Run packages directly from this repository(no cache):
+
+```sh
+nix run github:ryan4yin/nur-packages#yazi
+```
+
+Use this repository in `flake.nix`:
+
 ```nix
 # flake.nix
 {
