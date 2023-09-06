@@ -16,4 +16,6 @@
 
   yazi = pkgs.callPackage ./pkgs/yazi { inherit (pkgs.darwin.apple_sdk.frameworks) Foundation; };
   yazi-unstable = pkgs.callPackage ./pkgs/yazi/unstable.nix { inherit (pkgs.darwin.apple_sdk.frameworks) Foundation; };
+
+  gowin-eda-edu-ide = pkgs.callPackage ./pkgs/gowin-eda-edu-ide { };
 }
