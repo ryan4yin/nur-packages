@@ -29,16 +29,18 @@ Use this repository in `flake.nix`:
   };
 
   outputs = { self, nixpkgs, nur-ryan4yin, ... }@inputs: {
-    nixosConfigurations.default = nixpkgs.lib.nixosSystem {
+    nixosConfigurations.default = nixpkgs.lib.nixosSystem rec {
       system = "x86_64-linux";
       modules = [
-        # Add packages from this repo
-        nur-ryan4yin.packages.${pkgs.system}.yazi  # terminal file manager
-
-        # Binary cache (optional)
         ({ ... }: {
+          # Binary cache (optional)
           nix.settings.substituters = [ "https://ryan4yin.cachix.org" ];
           nix.settings.trusted-public-keys = [ "ryan4yin.cachix.org-1:Gbk27ZU5AYpGS9i3ssoLlwdvMIh0NxG0w8it/cv9kbU=" ];
+
+          environment.systemPackages = with pkgs; [
+            # Add packages from this repo
+            nur-ryan4yin.packages.${system}.yazi  # terminal file manager
+          ];
         })
       ];
     };
