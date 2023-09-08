@@ -27,5 +27,7 @@ in
       export LD_PRELOAD="${lib.getLib freetype}/lib/libfreetype.so"
       export QT_XKB_CONFIG_ROOT="${xkeyboard_config}/etc/X11/xkb"
       export FHS=1
+
+      gw_ide
     '';
   }
