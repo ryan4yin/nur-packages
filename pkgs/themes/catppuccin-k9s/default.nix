@@ -14,6 +14,13 @@ stdenv.mkDerivation rec {
     hash = "sha256-PtBJRBNbLkj7D2ko7ebpEjbfK9Ywjs7zbE+Y8FQVEfA=";
   };
 
+  installPhase = ''
+    runHook preInstall
+    mkdir -p $out
+    cp -r * $out
+    runHook postInstall
+  '';
+
   meta = with lib; {
     description = "Soothing pastel theme for k9s";
     homepage = "https://github.com/catppuccin/k9s";

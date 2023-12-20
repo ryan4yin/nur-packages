@@ -14,6 +14,13 @@ stdenv.mkDerivation rec {
     hash = "sha256-nsRuxQFKbQkyEI4TXgvAjcroVdG+heKX5Pauq/4Ota0=";
   };
 
+  installPhase = ''
+    runHook preInstall
+    mkdir -p $out
+    cp -r * $out
+    runHook postInstall
+  '';
+
   meta = with lib; {
     description = "Soothing pastel theme for Starship";
     homepage = "https://github.com/catppuccin/starship";

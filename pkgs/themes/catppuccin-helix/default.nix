@@ -14,6 +14,13 @@ stdenv.mkDerivation rec {
     hash = "sha256-qEXhj/Mpm+aqThqEq5DlPJD8nsbPov9CNMgG9s4E02g=";
   };
 
+  installPhase = ''
+    runHook preInstall
+    mkdir -p $out
+    cp -r * $out
+    runHook postInstall
+  '';
+
   meta = with lib; {
     description = "Soothing pastel theme for Helix";
     homepage = "https://github.com/catppuccin/helix";

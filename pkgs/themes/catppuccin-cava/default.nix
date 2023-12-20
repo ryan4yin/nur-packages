@@ -14,6 +14,13 @@ stdenv.mkDerivation rec {
     hash = "sha256-hYC6ExtroRy2UoxGNHAzKm9MlTdJSegUWToat4VoN20=";
   };
 
+  installPhase = ''
+    runHook preInstall
+    mkdir -p $out
+    cp -r * $out
+    runHook postInstall
+  '';
+
   meta = with lib; {
     description = "Soothing pastel theme for Cava";
     homepage = "https://github.com/catppuccin/cava";

@@ -14,6 +14,13 @@ stdenv.mkDerivation rec {
     hash = "sha256-07B5QmQmsUKYf38oWU3+2C6KO4JvinuTwmW1Pfk8CT8=";
   };
 
+  installPhase = ''
+    runHook preInstall
+    mkdir -p $out
+    cp -r * $out
+    runHook postInstall
+  '';
+
   meta = with lib; {
     description = "Soothing pastel theme for Hyprland";
     homepage = "https://github.com/catppuccin/hyprland";

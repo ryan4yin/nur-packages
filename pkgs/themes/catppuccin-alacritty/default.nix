@@ -14,6 +14,13 @@ stdenv.mkDerivation rec {
     hash = "sha256-w9XVtEe7TqzxxGUCDUR9BFkzLZjG8XrplXJ3lX6f+x0=";
   };
 
+  installPhase = ''
+    runHook preInstall
+    mkdir -p $out
+    cp -r * $out
+    runHook postInstall
+  '';
+
   meta = with lib; {
     description = "Soothing pastel theme for Alacritty";
     homepage = "https://github.com/catppuccin/alacritty";
