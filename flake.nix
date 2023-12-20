@@ -11,10 +11,10 @@
       "aarch64-linux"
       "armv6l-linux"
       "armv7l-linux"
-      # "riscv64-linux"
+      "riscv64-linux"
 
       "x86_64-darwin"
-      # "aarch64-darwin"
+      "aarch64-darwin"
     ];
     forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system);
   in {
