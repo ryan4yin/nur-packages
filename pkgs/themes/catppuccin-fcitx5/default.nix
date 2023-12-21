@@ -25,7 +25,7 @@ stdenv.mkDerivation rec {
     description = "Soothing pastel theme for Fcitx5";
     homepage = "https://github.com/catppuccin/fcitx5";
     license = licenses.mit;
-    maintainers = with maintainers; [ ryan4yin ];
+    maintainers = with maintainers; [];
     mainProgram = "fcitx5";
     platforms = platforms.all;
   };

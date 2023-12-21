@@ -25,7 +25,7 @@ stdenv.mkDerivation rec {
     description = "Soothing pastel theme for Alacritty";
     homepage = "https://github.com/catppuccin/alacritty";
     license = licenses.mit;
-    maintainers = with maintainers; [ ryan4yin ];
+    maintainers = with maintainers; [];
     mainProgram = "alacritty";
     platforms = platforms.all;
   };

@@ -25,7 +25,7 @@ stdenv.mkDerivation rec {
     description = "Soothing pastel theme for k9s";
     homepage = "https://github.com/catppuccin/k9s";
     license = licenses.mit;
-    maintainers = with maintainers; [ ryan4yin ];
+    maintainers = with maintainers; [];
     mainProgram = "k9s";
     platforms = platforms.all;
   };

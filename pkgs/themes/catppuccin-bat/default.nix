@@ -27,7 +27,7 @@ stdenv.mkDerivation rec {
     description = "Soothing pastel theme for Bat";
     homepage = "https://github.com/catppuccin/bat";
     license = licenses.mit;
-    maintainers = with maintainers; [ ryan4yin ];
+    maintainers = with maintainers; [];
     mainProgram = "bat";
     platforms = platforms.all;
   };

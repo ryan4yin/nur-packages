@@ -25,7 +25,7 @@ stdenv.mkDerivation rec {
     description = "Soothing pastel theme for Starship";
     homepage = "https://github.com/catppuccin/starship";
     license = licenses.mit;
-    maintainers = with maintainers; [ ryan4yin ];
+    maintainers = with maintainers; [];
     mainProgram = "starship";
     platforms = platforms.all;
   };

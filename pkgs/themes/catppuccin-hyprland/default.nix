@@ -25,7 +25,7 @@ stdenv.mkDerivation rec {
     description = "Soothing pastel theme for Hyprland";
     homepage = "https://github.com/catppuccin/hyprland";
     license = licenses.mit;
-    maintainers = with maintainers; [ ryan4yin ];
+    maintainers = with maintainers; [];
     mainProgram = "hyprland";
     platforms = platforms.all;
   };
