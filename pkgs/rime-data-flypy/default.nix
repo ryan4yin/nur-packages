@@ -23,7 +23,7 @@ stdenvNoCC.mkDerivation {
 
   meta = {
     description = "小鹤音形 (flypy) Rime schema data for fcitx5-rime and Squirrel";
-    homepage = "https://flypy.com/";
+    homepage = "https://flypy.cc/";
     platforms = lib.platforms.all;
   };
 }
