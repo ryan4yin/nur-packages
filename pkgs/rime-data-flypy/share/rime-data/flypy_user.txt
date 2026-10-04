@@ -1,0 +1,4 @@
+# coding: utf-8
+# flypy user dictionary placeholder.
+# Personal entries are supplied by the consuming configuration, which overlays
+# its own flypy_user.txt on top of this package.
