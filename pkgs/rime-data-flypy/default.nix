@@ -6,9 +6,9 @@ stdenvNoCC.mkDerivation {
   pname = "rime-data-flypy";
   version = "unstable-2025-10-18";
 
-  # Vendored snapshot of the 小鹤音形 (flypy) 鼠须管 data from flypy.com's
-  # official package. The personal user dictionary (flypy_user.txt) is
-  # intentionally not shipped here; it lives in the consuming configuration.
+  # Vendored snapshot of 小鹤音形 (flypy) 鼠须管 data from 小鹤网盘
+  # (http://flypy.ysepan.com → 第三方平台挂接文件 → 音形码 →
+  # 小鹤音形“鼠须管”for macOS.zip). See ./README.md for details.
   src = ./.;
 
   dontConfigure = true;
