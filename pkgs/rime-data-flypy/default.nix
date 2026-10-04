@@ -4,7 +4,8 @@
 }:
 stdenvNoCC.mkDerivation {
   pname = "rime-data-flypy";
-  version = "unstable-2025-10-18";
+  # Taken from schema.version in flypy.schema.yaml.
+  version = "10.9.4";
 
   # Vendored snapshot of 小鹤音形 (flypy) 鼠须管 data from 小鹤网盘
   # (http://flypy.ysepan.com → 第三方平台挂接文件 → 音形码 →

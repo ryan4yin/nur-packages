@@ -10,6 +10,7 @@ Vendored snapshot from 小鹤网盘:
 - 官网：<https://flypy.cc/>
 - 网盘地址：<http://flypy.ysepan.com>
 - 路径：**第三方平台挂接文件 → 音形码 → 小鹤音形“鼠须管”for macOS.zip**（rime 系通用，2.6MB）
+- 版本：`10.9.4`（取自 `flypy.schema.yaml` 的 `schema.version`）
 
 ## Layout
 
