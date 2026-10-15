@@ -1,0 +1,369 @@
+diff --git a/Controllers/ColorfulARGBController/.gitkeep b/Controllers/ColorfulARGBController/.gitkeep
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/Controllers/ColorfulARGBController/ColorfulARGBController.cpp b/Controllers/ColorfulARGBController/ColorfulARGBController.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..09c1e9f5fbaef54d63de655aa08f16845bed4aee
+--- /dev/null
++++ b/Controllers/ColorfulARGBController/ColorfulARGBController.cpp
+@@ -0,0 +1,135 @@
++/*---------------------------------------------------------*\
++| ColorfulARGBController.cpp                                |
++|                                                             |
++|   PROTOCOL (reverse-engineered from USB capture and a     |
++|   byte-by-byte diff against the official iGame Center):    |
++|                                                             |
++|   64-byte HID report "on the wire" (the device does not    |
++|   use numbered reports -- Report ID = 0):                  |
++|     byte[0]      = 0x01                                    |
++|     byte[1]      = 0x00                                    |
++|     byte[2]      = 0x88               (command, always the |
++|                     same)                                   |
++|     byte[3]      = seq -- an 11-step cycle: 0x00..0x09     |
++|                     then 0xFF, then back to 0x00. The      |
++|                     seq=0xFF packet MUST have zeroed RGB -- |
++|                     it is the commit/sync signal that makes |
++|                     the device actually apply the batched   |
++|                     colors to the physical LEDs. Without    |
++|                     this packet, the color never changes    |
++|                     even though every write() succeeds.     |
++|     byte[4..64]   = 20 RGB triplets (60 bytes), one per     |
++|                     LED "zone".                              |
++|                                                             |
++|   CROSS-PLATFORM NOTE (hidapi):                             |
++|   The Windows backend (hidapi_winapi) requires 1 EXTRA      |
++|   dummy byte prepended to the buffer (on top of the real    |
++|   64-byte report) before calling hid_write(), otherwise     |
++|   the first byte of the report gets truncated by Windows'   |
++|   HID class driver -- this was validated via USB capture    |
++|   during protocol research (see the standalone Rust         |
++|   project). The Linux backend (hidraw) does NOT need the    |
++|   extra dummy byte -- the 64-byte buffer is sent as-is to   |
++|   /dev/hidrawX. That's why SendPacket() below differs in    |
++|   buffer size/offset between _WIN32 and other platforms.    |
++|                                                             |
++|   This file is part of the OpenRGB project                 |
++|   SPDX-License-Identifier: GPL-2.0-only                    |
++\*---------------------------------------------------------*/
++
++#include "ColorfulARGBController.h"
++#include <cstring>
++
++ColorfulARGBController::ColorfulARGBController(hid_device* dev_handle, const char* path)
++{
++    dev      = dev_handle;
++    location = path;
++}
++
++ColorfulARGBController::~ColorfulARGBController()
++{
++    hid_close(dev);
++}
++
++std::string ColorfulARGBController::GetDeviceLocation()
++{
++    return("HID: " + location);
++}
++
++std::string ColorfulARGBController::GetSerialString()
++{
++    wchar_t serial_string[128];
++    int ret = hid_get_serial_number_string(dev, serial_string, 128);
++
++    if(ret != 0)
++    {
++        return("");
++    }
++
++    std::wstring return_wstring = serial_string;
++    return(std::string(return_wstring.begin(), return_wstring.end()));
++}
++
++void ColorfulARGBController::SendPacket(unsigned char* zone_rgb, unsigned char seq)
++{
++#ifdef _WIN32
++    /*-------------------------------------------------------------*\
++    | Windows: prepend 1 dummy 0x00 byte (not part of the real     |
++    | 64-byte report) so hidapi_winapi doesn't truncate the first  |
++    | byte of the actual data.                                     |
++    \*-------------------------------------------------------------*/
++    unsigned char usb_buf[COLORFUL_ARGB_REPORT_LEN + 1];
++    memset(usb_buf, 0x00, sizeof(usb_buf));
++
++    /* usb_buf[0] = dummy, leave it 0x00 */
++    usb_buf[1] = 0x01;
++    usb_buf[2] = 0x00;
++    usb_buf[3] = 0x88;
++    usb_buf[4] = seq;
++
++    /* Sync packet (seq=0xFF) always has zeroed RGB -- don't fill zone_rgb */
++    if((seq != 0xFF) && (zone_rgb != nullptr))
++    {
++        memcpy(&usb_buf[5], zone_rgb, COLORFUL_ARGB_NUM_ZONES * 3);
++    }
++
++    hid_write(dev, usb_buf, sizeof(usb_buf));
++#else
++    /*-------------------------------------------------------------*\
++    | Linux (hidraw): send exactly 64 bytes, no extra dummy byte -- |
++    | identical to the original USB capture.                        |
++    \*-------------------------------------------------------------*/
++    unsigned char usb_buf[COLORFUL_ARGB_REPORT_LEN];
++    memset(usb_buf, 0x00, sizeof(usb_buf));
++
++    usb_buf[0] = 0x01;
++    usb_buf[1] = 0x00;
++    usb_buf[2] = 0x88;
++    usb_buf[3] = seq;
++
++    /* Sync packet (seq=0xFF) always has zeroed RGB -- don't fill zone_rgb */
++    if((seq != 0xFF) && (zone_rgb != nullptr))
++    {
++        memcpy(&usb_buf[4], zone_rgb, COLORFUL_ARGB_NUM_ZONES * 3);
++    }
++
++    hid_write(dev, usb_buf, sizeof(usb_buf));
++#endif
++}
++
++void ColorfulARGBController::SetColors(unsigned char* colors_rgb, unsigned int num_zones)
++{
++    unsigned char zone_buf[COLORFUL_ARGB_NUM_ZONES * 3];
++    memset(zone_buf, 0x00, sizeof(zone_buf));
++
++    unsigned int copy_zones = (num_zones < COLORFUL_ARGB_NUM_ZONES) ? num_zones : COLORFUL_ARGB_NUM_ZONES;
++    memcpy(zone_buf, colors_rgb, copy_zones * 3);
++
++    /* Full cycle: 10 data packets (seq 0x00-0x09) + 1 commit/sync packet (seq 0xFF) */
++    for(unsigned char seq = 0x00; seq <= 0x09; seq++)
++    {
++        SendPacket(zone_buf, seq);
++    }
++
++    SendPacket(nullptr, 0xFF);
++}
+diff --git a/Controllers/ColorfulARGBController/ColorfulARGBController.h b/Controllers/ColorfulARGBController/ColorfulARGBController.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..9d7cb2f81faf72f6b63dcd48fcbb5978838ce014
+--- /dev/null
++++ b/Controllers/ColorfulARGBController/ColorfulARGBController.h
+@@ -0,0 +1,42 @@
++/*---------------------------------------------------------*\
++| ColorfulARGBController.h                                  |
++|                                                             |
++|   Driver for the onboard ARGB header on the Colorful       |
++|   B650M Battle-AX Plus V14. Protocol reverse-engineered    |
++|   from the official iGame Center software (see the .cpp    |
++|   comments for commit/sync cycle details).                 |
++|                                                             |
++|   This file is part of the OpenRGB project                 |
++|   SPDX-License-Identifier: GPL-2.0-only                    |
++\*---------------------------------------------------------*/
++
++#pragma once
++
++#include <string>
++#include <hidapi.h>
++
++#define COLORFUL_ARGB_NUM_ZONES     20
++#define COLORFUL_ARGB_REPORT_LEN    64
++
++class ColorfulARGBController
++{
++public:
++    ColorfulARGBController(hid_device* dev_handle, const char* path);
++    ~ColorfulARGBController();
++
++    std::string GetDeviceLocation();
++    std::string GetSerialString();
++
++    /*-----------------------------------------------------*\
++    | colors_rgb: flat array [R,G,B, R,G,B, ...] of length   |
++    | num_zones*3 bytes. Sends the full cycle (10 data       |
++    | packets + 1 commit packet) then returns.               |
++    \*-----------------------------------------------------*/
++    void SetColors(unsigned char* colors_rgb, unsigned int num_zones);
++
++private:
++    hid_device*     dev;
++    std::string     location;
++
++    void SendPacket(unsigned char* zone_rgb, unsigned char seq);
++};
+diff --git a/Controllers/ColorfulARGBController/ColorfulARGBControllerDetect.cpp b/Controllers/ColorfulARGBController/ColorfulARGBControllerDetect.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..8978d93373159823a0bf17d4239cb59712f6d148
+--- /dev/null
++++ b/Controllers/ColorfulARGBController/ColorfulARGBControllerDetect.cpp
+@@ -0,0 +1,38 @@
++/*---------------------------------------------------------*\
++| ColorfulARGBControllerDetect.cpp                           |
++|                                                             |
++|   Detector for the onboard ARGB header on the Colorful      |
++|   B650M Battle-AX Plus V14 (VID 0x2F4C / PID 0x1000, HID    |
++|   interface #2).                                             |
++|                                                             |
++|   This file is part of the OpenRGB project                 |
++|   SPDX-License-Identifier: GPL-2.0-only                    |
++\*---------------------------------------------------------*/
++
++#include "ColorfulARGBController.h"
++#include "DetectionManager.h"
++#include "RGBController_ColorfulARGB.h"
++#include <hidapi.h>
++
++#define COLORFUL_ARGB_VID          0x2F4C
++#define COLORFUL_ARGB_PID          0x1000
++#define COLORFUL_ARGB_INTERFACE    2
++
++std::vector<RGBController*> DetectColorfulARGBControllers(hid_device_info* info, const std::string& /*name*/)
++{
++    std::vector<RGBController*> controllers;
++
++    hid_device* dev = hid_open_path(info->path);
++
++    if(dev)
++    {
++        ColorfulARGBController*     controller     = new ColorfulARGBController(dev, info->path);
++        RGBController_ColorfulARGB* rgb_controller = new RGBController_ColorfulARGB(controller);
++
++        controllers.push_back(rgb_controller);
++    }
++
++    return(controllers);
++}
++
++REGISTER_HID_DETECTOR_I("Colorful B650M Battle-AX Plus ARGB", DetectColorfulARGBControllers, COLORFUL_ARGB_VID, COLORFUL_ARGB_PID, COLORFUL_ARGB_INTERFACE);
+diff --git a/Controllers/ColorfulARGBController/RGBController_ColorfulARGB.cpp b/Controllers/ColorfulARGBController/RGBController_ColorfulARGB.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..4c984f80abe2b9e917624e230b73aa3da7b5e539
+--- /dev/null
++++ b/Controllers/ColorfulARGBController/RGBController_ColorfulARGB.cpp
+@@ -0,0 +1,89 @@
++/*---------------------------------------------------------*\
++| RGBController_ColorfulARGB.cpp                             |
++|                                                             |
++|   This file is part of the OpenRGB project                 |
++|   SPDX-License-Identifier: GPL-2.0-only                    |
++\*---------------------------------------------------------*/
++
++#include "RGBController_ColorfulARGB.h"
++
++RGBController_ColorfulARGB::RGBController_ColorfulARGB(ColorfulARGBController* controller_ptr)
++{
++    controller  = controller_ptr;
++
++    name        = "Colorful B650M Battle-AX Plus ARGB";
++    vendor      = "Colorful";
++    type        = DEVICE_TYPE_MOTHERBOARD;
++    description = "Colorful B650M Battle-AX Plus onboard ARGB header";
++    location    = controller->GetDeviceLocation();
++    serial      = controller->GetSerialString();
++
++    mode Direct;
++    Direct.name       = "Direct";
++    Direct.value      = 0;
++    Direct.flags      = MODE_FLAG_HAS_PER_LED_COLOR;
++    Direct.color_mode = MODE_COLORS_PER_LED;
++    modes.push_back(Direct);
++
++    SetupZones();
++}
++
++RGBController_ColorfulARGB::~RGBController_ColorfulARGB()
++{
++    Shutdown();
++    delete controller;
++}
++
++void RGBController_ColorfulARGB::SetupZones()
++{
++    zone argb_zone;
++    argb_zone.name       = "ARGB Header";
++    argb_zone.type       = ZONE_TYPE_LINEAR;
++    argb_zone.leds_min   = COLORFUL_ARGB_NUM_ZONES;
++    argb_zone.leds_max   = COLORFUL_ARGB_NUM_ZONES;
++    argb_zone.leds_count = COLORFUL_ARGB_NUM_ZONES;
++    zones.push_back(argb_zone);
++
++    for(unsigned int led_idx = 0; led_idx < COLORFUL_ARGB_NUM_ZONES; led_idx++)
++    {
++        led new_led;
++        new_led.name = "ARGB Header LED " + std::to_string(led_idx + 1);
++        leds.push_back(new_led);
++    }
++
++    SetupColors();
++}
++
++void RGBController_ColorfulARGB::DeviceUpdateLEDs()
++{
++    unsigned char zone_rgb[COLORFUL_ARGB_NUM_ZONES * 3];
++
++    for(unsigned int led_idx = 0; led_idx < COLORFUL_ARGB_NUM_ZONES; led_idx++)
++    {
++        RGBColor color = colors[led_idx];
++        zone_rgb[(led_idx * 3) + 0] = RGBGetRValue(color);
++        zone_rgb[(led_idx * 3) + 1] = RGBGetGValue(color);
++        zone_rgb[(led_idx * 3) + 2] = RGBGetBValue(color);
++    }
++
++    controller->SetColors(zone_rgb, COLORFUL_ARGB_NUM_ZONES);
++}
++
++void RGBController_ColorfulARGB::DeviceUpdateZoneLEDs(int /*zone*/)
++{
++    /* There's only 1 zone containing all LEDs, so updating the zone means updating everything */
++    DeviceUpdateLEDs();
++}
++
++void RGBController_ColorfulARGB::DeviceUpdateSingleLED(int /*led*/)
++{
++    /* The device protocol always sends all 20 zones at once per cycle,
++       there's no way to update a single LED -- so resend everything. */
++    DeviceUpdateLEDs();
++}
++
++void RGBController_ColorfulARGB::DeviceUpdateMode()
++{
++    /* There's only a "Direct" mode (per-LED color), no other hardware
++       mode that needs to be switched on the device. */
++}
+diff --git a/Controllers/ColorfulARGBController/RGBController_ColorfulARGB.h b/Controllers/ColorfulARGBController/RGBController_ColorfulARGB.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..dd0fce99c09a3c9b8dc9584c4a01a396f0cd6c9a
+--- /dev/null
++++ b/Controllers/ColorfulARGBController/RGBController_ColorfulARGB.h
+@@ -0,0 +1,32 @@
++/*---------------------------------------------------------*\
++| RGBController_ColorfulARGB.h                               |
++|                                                             |
++|   RGBController for the onboard ARGB header on the         |
++|   Colorful B650M Battle-AX Plus V14                         |
++|                                                             |
++|   This file is part of the OpenRGB project                 |
++|   SPDX-License-Identifier: GPL-2.0-only                    |
++\*---------------------------------------------------------*/
++
++#pragma once
++
++#include "RGBController.h"
++#include "ColorfulARGBController.h"
++
++class RGBController_ColorfulARGB : public RGBController
++{
++public:
++    RGBController_ColorfulARGB(ColorfulARGBController* controller_ptr);
++    ~RGBController_ColorfulARGB();
++
++    void        SetupZones();
++
++    void        DeviceUpdateLEDs();
++    void        DeviceUpdateZoneLEDs(int zone);
++    void        DeviceUpdateSingleLED(int led);
++
++    void        DeviceUpdateMode();
++
++private:
++    ColorfulARGBController*    controller;
++};

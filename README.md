@@ -88,6 +88,8 @@ evaluates the repository before pushing.
    * Remember to mark the broken packages as `broken = true;` in the `meta`
      attribute, or travis (and consequently caching) will fail!
    * Library functions, modules and overlays go in the respective directories
+   * Patches carried for downstream repositories go in [patches](./patches), with their upstream
+     source and removal condition documented in its README
 2. [Add yourself to NUR](https://github.com/nix-community/NUR#how-to-add-your-own-repository) if you want to share your packages.
 
 ## LICENSE
