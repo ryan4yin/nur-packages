@@ -1,6 +1,6 @@
 {
   lib,
-  stdenv,
+  stdenvNoCC,
   fetchFromGitHub,
   dsh,
   mkUpdateScript,
@@ -9,7 +9,7 @@
 let
   versionData = lib.importJSON ./hashes.json;
 in
-stdenv.mkDerivation (finalAttrs: {
+stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "dsh-nushell-only";
   version = versionData.version;
 

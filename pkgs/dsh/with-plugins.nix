@@ -1,6 +1,6 @@
 {
   lib,
-  stdenv,
+  stdenvNoCC,
   concatTextFile,
   writeShellApplication,
   dsh,
@@ -31,7 +31,7 @@ else
       '';
     };
   in
-  stdenv.mkDerivation {
+  stdenvNoCC.mkDerivation {
     pname = "${dsh.pname}-with-plugins";
     inherit (dsh) version;
 
