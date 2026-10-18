@@ -3,6 +3,7 @@
   stdenv,
   fetchFromGitHub,
   dsh,
+  mkUpdateScript,
   nushell,
 }:
 let
@@ -38,6 +39,8 @@ stdenv.mkDerivation (finalAttrs: {
   '';
 
   passthru = {
+    updateScript = mkUpdateScript { name = "dsh-nushell-only"; };
+
     # Rendered patch used by dsh.withPlugins.
     pluginPatch = "${finalAttrs.finalPackage}/cordis.patch.yml";
     inherit nushell;
@@ -46,6 +49,7 @@ stdenv.mkDerivation (finalAttrs: {
   meta = {
     description = "Nushell-only shell executor, dialect guard, and teaching layer for dsh";
     homepage = "https://github.com/ryan4yin/dsh-nushell-only";
+    changelog = "https://github.com/ryan4yin/dsh-nushell-only/commits/develop";
     license = lib.licenses.mit;
     platforms = lib.platforms.all;
   };
