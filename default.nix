@@ -17,7 +17,7 @@ let
 
   dsh = pkgs.callPackage ./pkgs/dsh { inherit mkUpdateScript; };
 
-  dsh-nu = pkgs.callPackage ./pkgs/dsh-nu { inherit dsh nushell; };
+  dsh-nu = pkgs.callPackage ./pkgs/dsh-nu { inherit dsh mkUpdateScript nushell; };
 in
 {
   # The `lib`, `modules`, and `overlay` names are special

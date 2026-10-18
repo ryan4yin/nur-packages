@@ -3,18 +3,19 @@
   stdenvNoCC,
   fetchurl,
   dsh,
+  mkUpdateScript,
   nushell,
 }:
 let
-  version = "0.1.0";
+  versionData = lib.importJSON ./hashes.json;
 in
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "dsh-nu";
-  inherit version;
+  version = versionData.version;
 
   src = fetchurl {
-    url = "https://registry.npmjs.org/dsh-nu/-/dsh-nu-${version}.tgz";
-    hash = "sha256-oXriS9vDytZbY6g2Hv2yEovxEsHGUrumU0KUeUS2Hcg=";
+    url = "https://registry.npmjs.org/dsh-nu/-/dsh-nu-${versionData.version}.tgz";
+    hash = versionData.sourceHash;
   };
 
   dontConfigure = true;
@@ -48,6 +49,8 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   '';
 
   passthru = {
+    updateScript = mkUpdateScript { name = "dsh-nu"; };
+
     # Rendered patch used by dsh.withPlugins.
     pluginPatch = "${finalAttrs.finalPackage}/cordis.patch.yml";
     inherit nushell;
