@@ -14,7 +14,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   version = versionData.version;
 
   src = fetchurl {
-    url = "https://registry.npmjs.org/dsh-nu/-/dsh-nu-${versionData.version}.tgz";
+    url = "https://github.com/ryan4yin/dsh-nu/releases/download/v${versionData.version}/dsh-nu-${versionData.version}.tgz";
     hash = versionData.sourceHash;
   };
 

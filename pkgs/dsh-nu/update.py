@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Update dsh-nu to the latest npm release and verify the package builds."""
+"""Update dsh-nu to the latest GitHub release and verify the package builds."""
 
 from __future__ import annotations
 
@@ -10,9 +10,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 
 from update_lib import (  # noqa: E402 - the path above must run first
     is_newer,
+    latest_github_release,
     nix_build,
     nix_prefetch_file,
-    npm_latest_version,
     read_json,
     write_json,
 )
@@ -20,18 +20,21 @@ from update_lib import (  # noqa: E402 - the path above must run first
 PKG_DIR = Path(__file__).resolve().parent
 HASHES_FILE = PKG_DIR / "hashes.json"
 FLAKE_ATTR = ".#dsh-nu"
-PACKAGE = "dsh-nu"
+OWNER, REPO = "ryan4yin", "dsh-nu"
 
 
 def tarball_url(version: str) -> str:
-    """Return the registry tarball URL for a dsh-nu version."""
-    return f"https://registry.npmjs.org/dsh-nu/-/dsh-nu-{version}.tgz"
+    """Return the GitHub release asset URL for a dsh-nu version."""
+    return (
+        f"https://github.com/{OWNER}/{REPO}/releases/download/"
+        f"v{version}/dsh-nu-{version}.tgz"
+    )
 
 
 def main() -> None:
-    """Update hashes.json when npm has a newer release, then build the package."""
+    """Update hashes.json when GitHub has a newer release, then build the package."""
     current = read_json(HASHES_FILE)
-    latest = npm_latest_version(PACKAGE)
+    latest = latest_github_release(OWNER, REPO)
     print(f"current: {current['version']}, latest: {latest}")
     if not is_newer(latest, current["version"]):
         print("already up to date")
