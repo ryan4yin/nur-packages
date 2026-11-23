@@ -35,7 +35,7 @@ jobs:
       has-updates: ${{ steps.discover.outputs.has-updates }}
     steps:
       - uses: actions/checkout@v7
-      - uses: cachix/install-nix-action@v31
+      - uses: cachix/install-nix-action@v32
       - name: Build update matrix
         id: discover
         env:
@@ -53,7 +53,7 @@ jobs:
       matrix: ${{ fromJson(needs.discover.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v7
-      - uses: cachix/install-nix-action@v31
+      - uses: cachix/install-nix-action@v32
       - name: Update
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
